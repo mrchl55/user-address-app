@@ -16,9 +16,11 @@ docker compose up
 - Add the ability to **Create** a new user address. 
 - **Create** and **Edit** forms should be implemented in modals.
 - When inputting address fields, display a preview of the full address in the realtime in the following format:
+```
 <street> <building_number>
 <post_code> <city>
 <country_code>
+```
 3. You may use any UI library: MUI, AntD, etc.
 4. Handle data validation errors coming from the server.
 
