@@ -5,9 +5,9 @@ services:
     container_name: nextjs-task-db
     restart: always
     environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: mydatabase
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD:
+      POSTGRES_DB: postgres
     volumes:
       - nextjs-task-db-data:/var/lib/postgresql/data
       - ./build/local/docker/init.sql:/docker-entrypoint-initdb.d/init.sql
