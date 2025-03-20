@@ -1,7 +1,7 @@
 "use client";
 
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button, Alert, Typography, CircularProgress } from "@mui/material";
 import { getUserAddresses } from "../actions/addresses";
 import { ContextMenu } from "./ContextMenu";
@@ -12,6 +12,7 @@ import {
   createAddress,
   deleteAddress,
   updateAddress,
+  AddressFormData,
 } from "../actions/addresses";
 import { ConfirmDialog } from "./ConfirmDialog";
 
@@ -33,30 +34,28 @@ export function AddressList({ user }: AddressListProps) {
   );
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      loadAddresses();
-    }
-  }, [user, loadAddresses]);
-
-  async function loadAddresses() {
+  const loadAddresses = useCallback(async () => {
     if (!user) return;
     try {
       setLoading(true);
       setError(null);
       const data = await getUserAddresses(user.id);
       setAddresses(data.addresses);
-    } catch (error) {
-      console.error("Failed to load addresses:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to load addresses"
-      );
+    } catch (err) {
+      console.error("Failed to load addresses:", err);
+      setError(err instanceof Error ? err.message : "Failed to load addresses");
     } finally {
       setLoading(false);
     }
-  }
+  }, [user]);
 
-  const handleCreateAddress = async (data: any) => {
+  useEffect(() => {
+    if (user) {
+      loadAddresses();
+    }
+  }, [user, loadAddresses]);
+
+  const handleCreateAddress = async (data: AddressFormData) => {
     if (!user) return;
     try {
       setActionLoading(true);
@@ -64,8 +63,9 @@ export function AddressList({ user }: AddressListProps) {
       await createAddress({ ...data, userId: user.id });
       await loadAddresses();
       setModalOpen(false);
-    } catch (error) {
-      setError("Failed to create address");
+    } catch (err) {
+      console.error("Failed to create address:", err);
+      setError(err instanceof Error ? err.message : "Failed to create address");
     } finally {
       setActionLoading(false);
     }
@@ -87,8 +87,9 @@ export function AddressList({ user }: AddressListProps) {
         addressToDelete.validFrom
       );
       await loadAddresses();
-    } catch (error) {
-      setError("Failed to delete address");
+    } catch (err) {
+      console.error("Failed to delete address:", err);
+      setError(err instanceof Error ? err.message : "Failed to delete address");
     } finally {
       setActionLoading(false);
       setDeleteConfirmOpen(false);
@@ -96,7 +97,7 @@ export function AddressList({ user }: AddressListProps) {
     }
   };
 
-  const handleEditAddress = async (data: any) => {
+  const handleEditAddress = async (data: AddressFormData) => {
     if (!user || !editingAddress) return;
     try {
       setActionLoading(true);
@@ -110,10 +111,9 @@ export function AddressList({ user }: AddressListProps) {
       await loadAddresses();
       setModalOpen(false);
       setEditingAddress(null);
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to update address"
-      );
+    } catch (err) {
+      console.error("Failed to update address:", err);
+      setError(err instanceof Error ? err.message : "Failed to update address");
     } finally {
       setActionLoading(false);
     }
@@ -183,7 +183,7 @@ export function AddressList({ user }: AddressListProps) {
   }
 
   return (
-    <div className="mt-16">
+    <div className="mt-8">
       <div className="flex justify-between items-center mb-4">
         <Typography variant="h6">
           Addresses for {user.firstName} {user.lastName}

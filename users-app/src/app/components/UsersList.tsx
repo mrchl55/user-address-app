@@ -6,7 +6,7 @@ import {
   GridRenderCellParams,
   GridRowParams,
 } from "@mui/x-data-grid";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button, Alert } from "@mui/material";
 import { getUsers, createUser, updateUser, deleteUser } from "../actions/users";
 import { ContextMenu } from "./ContextMenu";
@@ -21,25 +21,6 @@ interface UserFormData {
   initials?: string;
 }
 
-const columns: GridColDef[] = [
-  { field: "id", headerName: "ID", width: 70 },
-  { field: "firstName", headerName: "First Name", width: 130 },
-  { field: "lastName", headerName: "Last Name", width: 130 },
-  { field: "email", headerName: "Email", width: 200 },
-  { field: "status", headerName: "Status", width: 100 },
-  {
-    field: "actions",
-    headerName: "Actions",
-    width: 100,
-    renderCell: (params: GridRenderCellParams<User>) => (
-      <ContextMenu
-        onEdit={() => console.log("Edit user:", params.row.id)}
-        onDelete={() => console.log("Delete user:", params.row.id)}
-      />
-    ),
-  },
-];
-
 export function UsersList() {
   const [rows, setRows] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,22 +29,22 @@ export function UsersList() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  async function loadUsers() {
+  const loadUsers = useCallback(async () => {
     try {
       setError(null);
       const data = await getUsers();
       setRows(data.users);
-    } catch (error) {
-      console.error("Failed to load users:", error);
-      setError(error instanceof Error ? error.message : "Failed to load users");
+    } catch (err) {
+      console.error("Failed to load users:", err);
+      setError(err instanceof Error ? err.message : "Failed to load users");
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const handleRowClick = (params: GridRowParams<User>) => {
     setSelectedUser(params.row);
@@ -72,10 +53,11 @@ export function UsersList() {
   const handleCreateUser = async (data: UserFormData) => {
     try {
       await createUser(data);
-      loadUsers();
+      await loadUsers();
       setModalOpen(false);
-    } catch (error) {
-      setError("Failed to create user");
+    } catch (err) {
+      console.error("Failed to create user:", err);
+      setError(err instanceof Error ? err.message : "Failed to create user");
     }
   };
 
@@ -83,22 +65,56 @@ export function UsersList() {
     if (!editingUser) return;
     try {
       await updateUser(editingUser.id, data);
-      loadUsers();
+      await loadUsers();
       setModalOpen(false);
       setEditingUser(null);
-    } catch (error) {
-      setError("Failed to update user");
+    } catch (err) {
+      console.error("Failed to update user:", err);
+      setError(err instanceof Error ? err.message : "Failed to update user");
     }
+  };
+
+  const handleDeleteClick = (id: number) => {
+    console.log("Delete user:", id);
+    // Implement delete confirmation dialog here
+    handleDeleteUser(id).catch((err) => {
+      console.error("Error deleting user:", err);
+    });
   };
 
   const handleDeleteUser = async (id: number) => {
     try {
       await deleteUser(id);
-      loadUsers();
-    } catch (error) {
-      setError("Failed to delete user");
+      await loadUsers();
+    } catch (err) {
+      console.error("Failed to delete user:", err);
+      setError(err instanceof Error ? err.message : "Failed to delete user");
+      throw err;
     }
   };
+
+  // Define columns inside the component to have access to the handler functions
+  const columns: GridColDef[] = [
+    { field: "id", headerName: "ID", width: 70 },
+    { field: "firstName", headerName: "First Name", width: 130 },
+    { field: "lastName", headerName: "Last Name", width: 130 },
+    { field: "email", headerName: "Email", width: 200 },
+    { field: "status", headerName: "Status", width: 100 },
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 100,
+      renderCell: (params: GridRenderCellParams<User>) => (
+        <ContextMenu
+          onEdit={() => {
+            setEditingUser(params.row);
+            setModalOpen(true);
+          }}
+          onDelete={() => handleDeleteClick(params.row.id)}
+        />
+      ),
+    },
+  ];
 
   return (
     <div>
@@ -116,7 +132,11 @@ export function UsersList() {
           </Button>
         </div>
         {error && (
-          <Alert severity="error" className="mb-4">
+          <Alert
+            severity="error"
+            className="mb-4"
+            onClose={() => setError(null)}
+          >
             {error}
           </Alert>
         )}
@@ -127,7 +147,7 @@ export function UsersList() {
           pageSizeOptions={[5, 10, 25]}
           onRowClick={handleRowClick}
           initialState={{
-            pagination: { pagerSize: 10 },
+            pagination: { paginationModel: { pageSize: 10 } },
           }}
         />
         <UserModal
