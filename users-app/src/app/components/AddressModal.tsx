@@ -8,7 +8,7 @@ import { AddressFormData } from "../actions/addresses";
 interface AddressModalProps {
   open: boolean;
   onClose: () => void;
-  address?: UserAddress;
+  address: UserAddress | null;
   onSubmit: (data: AddressFormData) => Promise<void>;
 }
 

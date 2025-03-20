@@ -155,9 +155,9 @@ export function AddressList({ user }: AddressListProps) {
       field: "validFrom",
       headerName: "Valid From",
       width: 150,
-      valueFormatter: (params) => {
-        if (!params.value) return "";
-        return format(new Date(params.value as string), "dd/MM/yyyy");
+      valueFormatter: (value: string) => {
+        if (!value) return "";
+        return format(new Date(value), "dd/MM/yyyy");
       },
     },
     {

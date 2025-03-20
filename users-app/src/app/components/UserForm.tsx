@@ -16,7 +16,7 @@ const userSchema = z.object({
 type UserFormData = z.infer<typeof userSchema>;
 
 interface UserFormProps {
-  user?: User;
+  user: User | null;
   onSubmit: (data: UserFormData) => Promise<void>;
   onCancel: () => void;
 }
@@ -28,12 +28,19 @@ export function UserForm({ user, onSubmit, onCancel }: UserFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
-    defaultValues: user || {
-      firstName: "",
-      lastName: "",
-      email: "",
-      initials: "",
-    },
+    defaultValues: user
+      ? {
+          firstName: user.firstName || "",
+          lastName: user.lastName,
+          email: user.email,
+          initials: user.initials || "",
+        }
+      : {
+          firstName: "",
+          lastName: "",
+          email: "",
+          initials: "",
+        },
   });
 
   return (

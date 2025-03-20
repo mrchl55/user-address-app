@@ -14,7 +14,7 @@ interface UserFormData {
 interface UserModalProps {
   open: boolean;
   onClose: () => void;
-  user?: User;
+  user: User | null;
   onSubmit: (data: UserFormData) => Promise<void>;
 }
 

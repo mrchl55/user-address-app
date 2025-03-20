@@ -23,7 +23,7 @@ const addressSchema = z.object({
 type FormData = z.infer<typeof addressSchema>;
 
 interface AddressFormProps {
-  address?: UserAddress;
+  address?: UserAddress | null;
   onSubmit: (data: AddressFormData) => Promise<void>;
   onCancel: () => void;
 }
@@ -38,7 +38,12 @@ export function AddressForm({ address, onSubmit, onCancel }: AddressFormProps) {
     resolver: zodResolver(addressSchema),
     defaultValues: address
       ? {
-          ...address,
+          addressType: address.addressType as "HOME" | "WORK",
+          street: address.street,
+          buildingNumber: address.buildingNumber,
+          postCode: address.postCode,
+          city: address.city,
+          countryCode: address.countryCode,
           validFrom: new Date(address.validFrom).toISOString().split("T")[0],
         }
       : {
@@ -54,10 +59,12 @@ export function AddressForm({ address, onSubmit, onCancel }: AddressFormProps) {
 
   const handleFormSubmit = async (data: FormData) => {
     // Convert the date string to a Date object
-    const formattedData = {
+    const formattedData: AddressFormData = {
       ...data,
       validFrom: new Date(data.validFrom),
+      userId: address?.userId ?? 0, // Provide a default value to satisfy TypeScript
     };
+
     await onSubmit(formattedData);
   };
 
