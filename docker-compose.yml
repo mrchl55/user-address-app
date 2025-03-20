@@ -6,13 +6,33 @@ services:
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD:
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     volumes:
       - nextjs-task-db-data:/var/lib/postgresql/data
       - ./build/local/docker/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
+
+  nextjs-app:
+    build:
+      context: ./users-app
+      dockerfile: Dockerfile.dev
+    container_name: nextjs-task-app
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgres
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./users-app:/app
+      - /app/node_modules
+      - /app/.next
 
 volumes:
   nextjs-task-db-data:

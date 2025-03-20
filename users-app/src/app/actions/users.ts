@@ -3,22 +3,14 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
-export async function getUsers(page: number = 1, pageSize: number = 10) {
+export async function getUsers() {
   try {
     const users = await prisma.user.findMany({
-      skip: (page - 1) * pageSize,
-      take: pageSize,
       orderBy: {
-        id: "asc",
+        lastName: "asc",
       },
     });
-
-    const total = await prisma.user.count();
-
-    return {
-      users,
-      total,
-    };
+    return { users };
   } catch (error) {
     console.error("Error fetching users:", error);
     throw new Error("Failed to fetch users");
@@ -33,10 +25,7 @@ export async function createUser(data: {
 }) {
   try {
     const user = await prisma.user.create({
-      data: {
-        ...data,
-        status: "ACTIVE",
-      },
+      data,
     });
     revalidatePath("/");
     return user;
@@ -49,10 +38,11 @@ export async function createUser(data: {
 export async function updateUser(
   id: number,
   data: {
-    firstName: string;
-    lastName: string;
-    email: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
     initials?: string;
+    status?: "ACTIVE" | "INACTIVE";
   }
 ) {
   try {

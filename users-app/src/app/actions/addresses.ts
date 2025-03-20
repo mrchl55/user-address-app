@@ -36,16 +36,27 @@ export async function getUserAddresses(userId: number) {
   }
 }
 
-export async function createAddress(data: z.infer<typeof addressSchema>) {
+export async function createAddress(data: any) {
   try {
-    addressSchema.parse(data);
+    // Ensure validFrom is a Date object
+    const formattedData = {
+      ...data,
+      validFrom:
+        data.validFrom instanceof Date
+          ? data.validFrom
+          : new Date(data.validFrom),
+    };
 
+    // Validate input
+    addressSchema.parse(formattedData);
+
+    // Check for existing address of same type
     const existingAddress = await prisma.userAddress.findFirst({
       where: {
-        userId: data.userId,
-        addressType: data.addressType,
+        userId: formattedData.userId,
+        addressType: formattedData.addressType,
         validFrom: {
-          lte: data.validFrom,
+          lte: formattedData.validFrom,
         },
       },
       orderBy: {
@@ -58,14 +69,17 @@ export async function createAddress(data: z.infer<typeof addressSchema>) {
     }
 
     const address = await prisma.userAddress.create({
-      data,
+      data: formattedData,
     });
     revalidatePath("/");
     return address;
   } catch (error) {
     console.error("Error creating address:", error);
     if (error instanceof z.ZodError) {
-      throw new Error("Invalid address data");
+      const errorMessages = error.errors
+        .map((err) => `${err.path.join(".")}: ${err.message}`)
+        .join(", ");
+      throw new Error(`Validation error: ${errorMessages}`);
     }
     throw new Error(
       error instanceof Error ? error.message : "Failed to create address"
@@ -77,25 +91,40 @@ export async function updateAddress(
   userId: number,
   addressType: string,
   validFrom: Date,
-  data: Partial<z.infer<typeof addressSchema>>
+  data: any
 ) {
   try {
+    // Ensure validFrom is a Date object if it exists in the data
+    const formattedData = {
+      ...data,
+      validFrom:
+        data.validFrom instanceof Date
+          ? data.validFrom
+          : data.validFrom
+          ? new Date(data.validFrom)
+          : undefined,
+    };
+
     const address = await prisma.userAddress.update({
       where: {
         userId_addressType_validFrom: {
           userId,
           addressType,
-          validFrom,
+          validFrom:
+            validFrom instanceof Date ? validFrom : new Date(validFrom),
         },
       },
-      data,
+      data: formattedData,
     });
     revalidatePath("/");
     return address;
   } catch (error) {
     console.error("Error updating address:", error);
     if (error instanceof z.ZodError) {
-      throw new Error("Invalid address data");
+      const errorMessages = error.errors
+        .map((err) => `${err.path.join(".")}: ${err.message}`)
+        .join(", ");
+      throw new Error(`Validation error: ${errorMessages}`);
     }
     throw new Error("Failed to update address");
   }
@@ -112,7 +141,8 @@ export async function deleteAddress(
         userId_addressType_validFrom: {
           userId,
           addressType,
-          validFrom,
+          validFrom:
+            validFrom instanceof Date ? validFrom : new Date(validFrom),
         },
       },
     });

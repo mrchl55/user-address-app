@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { UserAddress } from "@prisma/client";
 import { AddressPreview } from "./AddressPreview";
-import { useEffect } from "react";
 
 const addressSchema = z.object({
   addressType: z.enum(["HOME", "WORK"]),
@@ -20,11 +19,11 @@ const addressSchema = z.object({
   validFrom: z.string().min(1, "Valid from date is required"),
 });
 
-type AddressFormData = z.infer<typeof addressSchema>;
+type FormData = z.infer<typeof addressSchema>;
 
 interface AddressFormProps {
   address?: UserAddress;
-  onSubmit: (data: AddressFormData) => Promise<void>;
+  onSubmit: (data: any) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -34,7 +33,7 @@ export function AddressForm({ address, onSubmit, onCancel }: AddressFormProps) {
     handleSubmit,
     formState: { errors, isSubmitting },
     watch,
-  } = useForm<AddressFormData>({
+  } = useForm<FormData>({
     resolver: zodResolver(addressSchema),
     defaultValues: address
       ? {
@@ -52,6 +51,15 @@ export function AddressForm({ address, onSubmit, onCancel }: AddressFormProps) {
         },
   });
 
+  const handleFormSubmit = async (data: FormData) => {
+    // Convert the date string to a Date object
+    const formattedData = {
+      ...data,
+      validFrom: new Date(data.validFrom),
+    };
+    await onSubmit(formattedData);
+  };
+
   // Watch form fields for preview
   const street = watch("street");
   const buildingNumber = watch("buildingNumber");
@@ -60,7 +68,7 @@ export function AddressForm({ address, onSubmit, onCancel }: AddressFormProps) {
   const countryCode = watch("countryCode");
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSubmit(handleFormSubmit)}>
       <Stack spacing={3}>
         <TextField
           select

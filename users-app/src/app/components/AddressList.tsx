@@ -2,7 +2,7 @@
 
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { useState, useEffect } from "react";
-import { Button, Alert, Typography } from "@mui/material";
+import { Button, Alert, Typography, CircularProgress } from "@mui/material";
 import { getUserAddresses } from "../actions/addresses";
 import { ContextMenu } from "./ContextMenu";
 import { User, UserAddress } from "@prisma/client";
@@ -13,47 +13,11 @@ import {
   deleteAddress,
   updateAddress,
 } from "../actions/addresses";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 interface AddressListProps {
   user: User | null;
 }
-
-const columns: GridColDef[] = [
-  {
-    field: "addressType",
-    headerName: "Type",
-    width: 100,
-    valueGetter: (params) => params.row.addressType,
-  },
-  {
-    field: "fullAddress",
-    headerName: "Address",
-    width: 300,
-    valueGetter: (params) =>
-      `${params.row.street} ${params.row.buildingNumber}\n${params.row.postCode} ${params.row.city}\n${params.row.countryCode}`,
-  },
-  {
-    field: "validFrom",
-    headerName: "Valid From",
-    width: 150,
-    valueGetter: (params) =>
-      format(new Date(params.row.validFrom), "dd/MM/yyyy"),
-  },
-  {
-    field: "actions",
-    headerName: "Actions",
-    width: 100,
-    renderCell: (params: GridRenderCellParams<UserAddress>) => (
-      <ContextMenu
-        onEdit={() => {
-          setEditingAddress(params.row);
-          setModalOpen(true);
-        }}
-        onDelete={() => handleDeleteAddress(params.row)}
-      />
-    ),
-  },
-];
 
 export function AddressList({ user }: AddressListProps) {
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
@@ -63,6 +27,11 @@ export function AddressList({ user }: AddressListProps) {
   const [editingAddress, setEditingAddress] = useState<UserAddress | null>(
     null
   );
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [addressToDelete, setAddressToDelete] = useState<UserAddress | null>(
+    null
+  );
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -90,45 +59,124 @@ export function AddressList({ user }: AddressListProps) {
   const handleCreateAddress = async (data: any) => {
     if (!user) return;
     try {
+      setActionLoading(true);
+      setError(null);
       await createAddress({ ...data, userId: user.id });
-      loadAddresses();
+      await loadAddresses();
       setModalOpen(false);
     } catch (error) {
       setError("Failed to create address");
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  const handleDeleteAddress = async (address: UserAddress) => {
+  const handleDeleteClick = (address: UserAddress) => {
+    setAddressToDelete(address);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!addressToDelete) return;
     try {
+      setActionLoading(true);
+      setError(null);
       await deleteAddress(
-        address.userId,
-        address.addressType,
-        address.validFrom
+        addressToDelete.userId,
+        addressToDelete.addressType,
+        addressToDelete.validFrom
       );
-      loadAddresses();
+      await loadAddresses();
     } catch (error) {
       setError("Failed to delete address");
+    } finally {
+      setActionLoading(false);
+      setDeleteConfirmOpen(false);
+      setAddressToDelete(null);
     }
   };
 
   const handleEditAddress = async (data: any) => {
     if (!user || !editingAddress) return;
     try {
+      setActionLoading(true);
+      setError(null);
       await updateAddress(
         editingAddress.userId,
         editingAddress.addressType,
         editingAddress.validFrom,
         data
       );
-      loadAddresses();
+      await loadAddresses();
       setModalOpen(false);
       setEditingAddress(null);
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "Failed to update address"
       );
+    } finally {
+      setActionLoading(false);
     }
   };
+
+  // Define columns inside the component to have access to the handler functions
+  const columns: GridColDef[] = [
+    {
+      field: "addressType",
+      headerName: "Type",
+      width: 100,
+    },
+    {
+      field: "street",
+      headerName: "Street",
+      width: 150,
+    },
+    {
+      field: "buildingNumber",
+      headerName: "Building",
+      width: 100,
+    },
+    {
+      field: "city",
+      headerName: "City",
+      width: 150,
+    },
+    {
+      field: "postCode",
+      headerName: "Post Code",
+      width: 120,
+    },
+    {
+      field: "countryCode",
+      headerName: "Country",
+      width: 100,
+    },
+    {
+      field: "validFrom",
+      headerName: "Valid From",
+      width: 150,
+      valueFormatter: (params) => {
+        if (!params.value) return "";
+        return format(new Date(params.value as string), "dd/MM/yyyy");
+      },
+    },
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 100,
+      renderCell: (params: GridRenderCellParams<UserAddress>) => {
+        return (
+          <ContextMenu
+            onEdit={() => {
+              setEditingAddress(params.row);
+              setModalOpen(true);
+            }}
+            onDelete={() => handleDeleteClick(params.row)}
+          />
+        );
+      },
+    },
+  ];
 
   if (!user) {
     return null;
@@ -147,8 +195,9 @@ export function AddressList({ user }: AddressListProps) {
             setEditingAddress(null);
             setModalOpen(true);
           }}
+          disabled={actionLoading}
         >
-          Add New Address
+          {actionLoading ? <CircularProgress size={24} /> : "Add New Address"}
         </Button>
       </div>
       {error && (
@@ -162,11 +211,13 @@ export function AddressList({ user }: AddressListProps) {
           columns={columns}
           loading={loading}
           getRowId={(row) =>
-            `${row.userId}-${row.addressType}-${row.validFrom}`
+            `${row.userId}-${row.addressType}-${new Date(
+              row.validFrom
+            ).getTime()}`
           }
           pageSizeOptions={[5, 10, 25]}
           initialState={{
-            pagination: { pagerSize: 5 },
+            pagination: { paginationModel: { pageSize: 5 } },
           }}
         />
       </div>
@@ -178,6 +229,16 @@ export function AddressList({ user }: AddressListProps) {
         }}
         address={editingAddress}
         onSubmit={editingAddress ? handleEditAddress : handleCreateAddress}
+      />
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        title="Delete Address"
+        message="Are you sure you want to delete this address? This action cannot be undone."
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => {
+          setDeleteConfirmOpen(false);
+          setAddressToDelete(null);
+        }}
       />
     </div>
   );
