@@ -37,7 +37,7 @@ export function AddressList({ user }: AddressListProps) {
     if (user) {
       loadAddresses();
     }
-  }, [user]);
+  }, [user, loadAddresses]);
 
   async function loadAddresses() {
     if (!user) return;
@@ -183,7 +183,7 @@ export function AddressList({ user }: AddressListProps) {
   }
 
   return (
-    <div className="mt-8">
+    <div className="mt-16">
       <div className="flex justify-between items-center mb-4">
         <Typography variant="h6">
           Addresses for {user.firstName} {user.lastName}

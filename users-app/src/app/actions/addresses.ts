@@ -15,12 +15,12 @@ const addressSchema = z.object({
   buildingNumber: z.string().min(1).max(60),
 });
 
-class AddressError extends Error {
-  constructor(message: string, public code: string) {
-    super(message);
-    this.name = "AddressError";
-  }
-}
+export type AddressFormData = Omit<
+  z.infer<typeof addressSchema>,
+  "validFrom"
+> & {
+  validFrom: Date | string;
+};
 
 export async function getUserAddresses(userId: number) {
   try {
@@ -36,7 +36,7 @@ export async function getUserAddresses(userId: number) {
   }
 }
 
-export async function createAddress(data: any) {
+export async function createAddress(data: AddressFormData) {
   try {
     // Ensure validFrom is a Date object
     const formattedData = {
@@ -91,7 +91,7 @@ export async function updateAddress(
   userId: number,
   addressType: string,
   validFrom: Date,
-  data: any
+  data: Partial<AddressFormData>
 ) {
   try {
     // Ensure validFrom is a Date object if it exists in the data

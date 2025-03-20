@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { UserAddress } from "@prisma/client";
 import { AddressPreview } from "./AddressPreview";
+import { AddressFormData } from "../actions/addresses";
 
 const addressSchema = z.object({
   addressType: z.enum(["HOME", "WORK"]),
@@ -23,7 +24,7 @@ type FormData = z.infer<typeof addressSchema>;
 
 interface AddressFormProps {
   address?: UserAddress;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: AddressFormData) => Promise<void>;
   onCancel: () => void;
 }
 

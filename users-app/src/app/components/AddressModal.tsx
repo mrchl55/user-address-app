@@ -3,12 +3,13 @@
 import { BaseModal } from "./BaseModal";
 import { AddressForm } from "./AddressForm";
 import { UserAddress } from "@prisma/client";
+import { AddressFormData } from "../actions/addresses";
 
 interface AddressModalProps {
   open: boolean;
   onClose: () => void;
   address?: UserAddress;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: AddressFormData) => Promise<void>;
 }
 
 export function AddressModal({

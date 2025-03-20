@@ -1,6 +1,11 @@
 "use client";
 
-import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridColDef,
+  GridRenderCellParams,
+  GridRowParams,
+} from "@mui/x-data-grid";
 import { useState, useEffect } from "react";
 import { Button, Alert } from "@mui/material";
 import { getUsers, createUser, updateUser, deleteUser } from "../actions/users";
@@ -8,6 +13,13 @@ import { ContextMenu } from "./ContextMenu";
 import { UserModal } from "./UserModal";
 import { User } from "@prisma/client";
 import { AddressList } from "./AddressList";
+
+interface UserFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  initials?: string;
+}
 
 const columns: GridColDef[] = [
   { field: "id", headerName: "ID", width: 70 },
@@ -53,12 +65,11 @@ export function UsersList() {
     }
   }
 
-  const handleRowClick = (params: any) => {
+  const handleRowClick = (params: GridRowParams<User>) => {
     setSelectedUser(params.row);
-    // We'll implement address list display later
   };
 
-  const handleCreateUser = async (data: any) => {
+  const handleCreateUser = async (data: UserFormData) => {
     try {
       await createUser(data);
       loadUsers();
@@ -68,7 +79,7 @@ export function UsersList() {
     }
   };
 
-  const handleUpdateUser = async (data: any) => {
+  const handleUpdateUser = async (data: UserFormData) => {
     if (!editingUser) return;
     try {
       await updateUser(editingUser.id, data);
@@ -114,7 +125,7 @@ export function UsersList() {
           columns={columns}
           loading={loading}
           pageSizeOptions={[5, 10, 25]}
-          onRowClick={(params) => setSelectedUser(params.row)}
+          onRowClick={handleRowClick}
           initialState={{
             pagination: { pagerSize: 10 },
           }}

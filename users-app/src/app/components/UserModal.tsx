@@ -4,11 +4,18 @@ import { BaseModal } from "./BaseModal";
 import { UserForm } from "./UserForm";
 import { User } from "@prisma/client";
 
+interface UserFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  initials?: string;
+}
+
 interface UserModalProps {
   open: boolean;
   onClose: () => void;
   user?: User;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: UserFormData) => Promise<void>;
 }
 
 export function UserModal({ open, onClose, user, onSubmit }: UserModalProps) {
