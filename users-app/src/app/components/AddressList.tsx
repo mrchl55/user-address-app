@@ -183,7 +183,7 @@ export function AddressList({ user }: AddressListProps) {
   }
 
   return (
-    <div className="mt-8">
+    <div className="mt-16">
       <div className="flex justify-between items-center mb-4">
         <Typography variant="h6">
           Addresses for {user.firstName} {user.lastName}
