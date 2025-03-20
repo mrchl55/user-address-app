@@ -74,11 +74,6 @@ users-app/
    docker-compose up -d --build
    ```
 
-2. Run the container:
-
-   ```bash
-   docker run -p 3000:3000 -e DATABASE_URL=your_production_db_url user-address-app
-   ```
 
 3. Worst case scenario: uncomment ignoreBuildErrors and ignoreDuringBuilds in next.config.ts :D
 
