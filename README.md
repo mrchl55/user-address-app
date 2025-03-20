@@ -1,39 +1,87 @@
-## Task
+# User Address Management Application
 
-Create a NextJS application which allows you to manage users' addresses. The database schema with sample records is provided for you, you can set it up by running:
+A NextJS application for managing users and their addresses. This application demonstrates modern web development practices including server actions, TypeScript, and responsive UI design with Material UI.
 
-```bash
-docker compose up
+## Features
+
+- User management (create, read, update, delete)
+- Address management for users (create, read, update, delete)
+- Real-time address preview when creating/editing addresses
+- Form validation with error handling
+- Responsive UI built with Material UI components
+- Server-side data handling with NextJS Server Actions
+
+## Tech Stack
+
+- **Frontend**: NextJS, React, Material UI
+- **Backend**: NextJS Server Actions
+- **Database**: PostgreSQL
+- **ORM**: Prisma
+- **Containerization**: Docker
+- **Language**: TypeScript
+
+## Getting Started
+
+### Prerequisites
+
+- Docker and Docker Compose
+
+### Running the Application
+
+1. Clone the repository
+
+2. Start the application using Docker Compose:
+
+   ```bash
+   docker compose up
+   ```
+
+3. The application will be available at http://localhost:3000
+
+4. The database will be initialized with sample data automatically
+
+## Usage
+
+- **View Users**: The main page displays a list of users
+- **Create User**: Click "Add New User" to create a new user
+- **Edit/Delete User**: Use the context menu in the user row
+- **View Addresses**: Click on a user to view their addresses
+- **Create Address**: Click "Add New Address" when viewing a user's addresses
+- **Edit/Delete Address**: Use the context menu in the address row
+
+## Project Structure
+
+```
+users-app/
+├── src/
+│   ├── app/                  # Next.js App Router
+│   │   ├── actions/          # Server Actions
+│   │   ├── components/       # React components
+│   │   ├── constants/        # Application constants
+│   │   └── page.tsx          # Main page component
+│   ├── lib/                  # Utility functions and libraries
+│   └── prisma/               # Prisma schema and migrations
+├── public/                   # Static assets
+├── Dockerfile                # Production Docker configuration
+└── package.json              # Project dependencies and scripts
 ```
 
-## UI Requirements
+## Production Deployment
 
-1. The UI should only include what's required in task's description. There is no need to build authentication, menus or any features besides what's required.
-2. The UI should consist of:
-- A paginated users' list. Add a mocked button to **Create** a new user above the list and in each record, a context menu with mocked **Edit** and **Delete** buttons.
-- A paginated users' addresses list. The list should be visible after clicking a user record in the users' list.
-- In the addresses list, include a context menu where you can **Edit** and **Delete** an address record.
-- Add the ability to **Create** a new user address. 
-- **Create** and **Edit** forms should be implemented in modals.
-- When inputting address fields, display a preview of the full address in the realtime in the following format:
-```
-<street> <building_number>
-<post_code> <city>
-<country_code>
-```
-3. You may use any UI library: MUI, AntD, etc.
-4. Handle data validation errors coming from the server.
+1. Build the production Docker image:
 
-## Server Requirements
+   ```bash
+   docker-compose up -d --build
+   ```
 
-1. Use the database schema provided. Do not modify it.
-2. Implement ["Server Actions"](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations) which the frontend should use to interact with the database.
-3. You may use any ORM or Query Builder.
-4. Introduce simple data validation. Nothing fancy, you can use constraints from the database schema. Country codes use ISO3166-1 alpha-3 standard.
+2. Run the container:
 
-## General Requirements
+   ```bash
+   docker run -p 3000:3000 -e DATABASE_URL=your_production_db_url user-address-app
+   ```
 
-1. Expect the application to eventually include many similar CRUD components (i.e. "users_tasks", "users_permissions", etc.), make your code modular, extensible and generic so that similar modules can be developed with less overhead.
-2. Keep the code clean, scalable, follow known conding conventions, paradigms, patterns, etc.
-3. Use TypeScript.
-4. You do not have to deploy the application, but prepare the codebase for deployment to an environment of your choice.
+3. Worst case scenario: uncomment ignoreBuildErrors and ignoreDuringBuilds in next.config.ts :D
+
+## License
+
+This project is licensed under the MIT License.
